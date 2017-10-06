@@ -56,12 +56,12 @@ else: #test data for inactive member: dms,00072497335,1972123456789,test@gmail.c
 
     epl = (
     "N" "\n"
-    'A0,0,0,5,1,1,N,"BIN OWNER INACTIVE"' "\n"
-    'A0,75,0,4,1,1,N,"SCAN DATE: '  + str(current_time) + '"\n'
-    'A0,150,0,4,1,1,N,"MEMBER INFO:"' "\n"
-    'A0,200,0,3,1,1,N,"NAME: '  + str(firstName + " " + lastName) + '"\n'
-    'A0,300,0,3,1,1,N,"EMAIL: '  + str(email) + '"\n'
-    'A0,400,0,3,1,1,N,"PHONE: '  + str(phone) + '"\n'
+    'A0,25,0,5,1,1,N,"BIN OWNER INACTIVE"' "\n"
+    'A0,100,0,4,1,1,N,"SCAN DATE: '  + str(current_time) + '"\n'
+    'A5,150,0,4,1,1,N,"MEMBER INFO:"' "\n"
+    'A5,200,0,3,1,1,N,"NAME: '  + str(firstName + " " + lastName) + '"\n'
+    'A5,250,0,3,1,1,N,"EMAIL: '  + str(email) + '"\n'
+    'A5,300,0,3,1,1,N,"PHONE: '  + str(phone) + '"\n'
     "LO,600,750,20" "\n"
     'B50,800,0,3,3,7,200,B,"' + str(rfid) + '"\n'
     "P1" "\n"
