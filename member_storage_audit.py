@@ -17,6 +17,8 @@ while True:
     print (current_time)
 
     qr_data = (input('Please scan QR code: ')).strip().split(',')
+    #qr_data = string.replace(qr_raw, '"', '@') #convert the " in the email address to a proper @
+
     
     if qr_data == 'exit':
         break
@@ -24,7 +26,7 @@ while True:
     rfid = ''.join(qr_data[1:2])
     firstName = ''.join(qr_data[4:5])
     lastName = ''.join(qr_data[5:])
-    email = ''.join(qr_data[3:4])
+    email = ''.join(qr_data[3:4]).replace('"', '@')
     phone = ''.join(qr_data[2:3])
 
     print("Member's RFID: " + rfid)
