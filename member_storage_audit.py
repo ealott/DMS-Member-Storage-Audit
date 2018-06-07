@@ -1,54 +1,78 @@
 #!/usr/bin/python
+from __builtin__ import raw_input
 
-import requests,json,socket
+import requests
+import json
+import socket
+import ConfigParser
 from time import gmtime, strftime
 
-def lookup_barcode(storage_bin_qr_code):    
-    rfid = ''.join(qr_data[1:2])
-    firstName = ''.join(qr_data[4:5])
-    lastName = ''.join(qr_data[5:])
-    phone = ''.join(qr_data[2:3])
+#Read config file
+config = ConfigParser.ConfigParser()
+config.read("config.ini")
+
+
+def lookup_barcode(storage_bin_qr_code):
+    rfid = ''.join(storage_bin_qr_code[1:2])
+    firstname = ''.join(storage_bin_qr_code[4:5])
+    lastname = ''.join(storage_bin_qr_code[5:])
+    phone = ''.join(storage_bin_qr_code[2:3])
     
     #some, but not all storage tags substitute @ in the email with "
-    if ('"') in qr_data[3:4]:
-        email = ''.join(qr_data[3:4]).replace('"', '@')
+    if ('"') in storage_bin_qr_code[3:4]:
+        email = ''.join(storage_bin_qr_code[3:4]).replace('"', '@')
     else:
-        email = ''.join(qr_data[3:4])
+        email = ''.join(storage_bin_qr_code[3:4])
 
     print("Member's RFID: " + rfid)
-    print ("First name: "+ firstName)
-    print ("Last name: " + lastName)
-    print ("Email: " + email)
+    print("First name: " + firstname)
+    print("Last name: " + lastname)
+    print("Email: " + email)
 
-    url = "http://192.168.200.32:8080/api/v1/users/lookupByFields"
-    payload = "rfid=" + rfid 
+    response = query_member_info_api("rfid",rfid)
+    response_body = json.loads(response.text)
+    #print(response_body)
+
+    if response_body['result']:
+        print("Member active" + "\n")
+
+    else:
+        response = query_member_info_api("phone", phone)
+        response_body = json.loads(response.text)
+        if response_body['result']:
+            print("Member active" + "\n")
+        else:
+            response = query_member_info_api("email", email)
+            response_body = json.loads(response.text)
+            if response_body['result']:
+                print("Member active" + "\n")
+
+            else:  # test data for inactive member: dms,00072497335,1972123456789,test@gmail.com,John,Smith
+                print("Member not active, or data lookup failed.")
+                print("Member name: " + firstname + " " + lastname)
+                print("Member email: " + email)
+                print("Member phone: " + phone + "\n")
+
+        inactive_member_info = {"First name": firstname, "Last name": lastname, "email": email, "Phone": phone}
+        inactive_members.append(inactive_member_info)
+
+        print_to_zebra(firstname, lastname, email, phone, rfid, TCP_IP, TCP_PORT)
+
+
+def query_member_info_api(member_data_type, member_data):
+    #TODO: move API settings to config file
+    api_url = "http://192.168.200.32:8080/api/v1/users/lookupByFields"
+    payload = member_data_type + "=" + member_data
     headers = {
         'cache-control':"no-cache",
         'content-type': "application/x-www-form-urlencoded",
        }
-    response = requests.request("POST", url, data=payload, headers=headers)
+    response = requests.request("POST", api_url, data=payload, headers=headers)
     
     #print(response)
-
-    response_body = json.loads(response.text)
-
     #print(response.text)
-    print(response_body)
+    return response
 
-    if  response_body['result']:
-        print("Member active" + "\n")
-    
-    else: #test data for inactive member: dms,00072497335,1972123456789,test@gmail.com,John,Smith
-        print("Member not active, or data lookup failed.")
-        print("Member name: " + firstName + " " + lastName)
-        print("Member email: " + email)
-        print("Member phone: " + phone + "\n")
-        
-        inactive_member_info = {"First name": firstName, "Last name": lastName, "email": email, "Phone": phone}        
-        inactive_members.append(inactive_member_info)
-        
-        print_to_zebra(firstName,lastName,email,phone,rfid,TCP_IP,TCP_PORT)
-        
         
 def print_to_zebra(firstName,lastName,email,phone,rfid,TCP_IP,TCP_PORT):
 
@@ -76,6 +100,7 @@ def print_to_zebra(firstName,lastName,email,phone,rfid,TCP_IP,TCP_PORT):
         s.send(bytes(epl, "utf-8"))
         s.close()
 
+#TODO: break printer settings into cfg file
 #network settings for zebra LP 2844 printer (supports EPL only)
 TCP_IP = '192.168.206.120' #was '192.168.204.222'
 TCP_PORT = 9100
@@ -88,9 +113,10 @@ print('Begin scanning storage bins.  Type "exit" and press enter to exit.')
 while True:
     
     current_time = strftime("%a, %d %b %Y %X +0000", gmtime())
-    print (current_time)
+    print(current_time)
 
-    qr_data = (input('Please scan QR code: ')).strip().split(',')
+    qr_data = (raw_input('Please scan QR code: ')).strip().split(',')
+
     #qr_data = string.replace(qr_raw, '"', '@') #convert the " in the email address to a proper @
     
     if qr_data != 'exit':
@@ -98,6 +124,4 @@ while True:
     
     else:
         break
-
-    
 
